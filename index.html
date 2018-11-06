@@ -8,6 +8,9 @@
     body {
       background: black;
     }
+    svg {
+      margin-top: 200px;
+    }
   </style>
 </head>
 <body>
@@ -16,7 +19,7 @@
 
     var color = d3.scaleLinear()
             .domain([0,1,2,3,4,5,6,10,15,20,100])
-            .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);
+            .range(["#8bf785", "#7ddd77", "#70c96a", "#61ad5b", "#54994f", "#478243", "#40723c", "#386334", "#2f542c", "#264424", "#1d351c", "#142614"]);
 
     d3.text(dataSource)
     .then(function(lyrics) {
@@ -53,11 +56,11 @@
         {text: 'hello2', size: 15},
         {text: 'hello3', size: 20},
       ]
-      d3.layout.cloud().size([850, 350])
-        .words(dummyWords)
+      d3.layout.cloud().size([1000, 500])
+        .words(arrWords)
         .rotate(0)
         .fontSize(function(word) {
-          return word.size;
+          return fontScale(word.size);
         })
         .on('word', function(word) {
         })
@@ -65,27 +68,26 @@
         .start();
 
       function draw (words) {
-        var w = 850,
-            h = 350;
+        var w = 1200,
+            h = 700;
         var svg = d3.select('body')
                     .append('svg')
                     .attr('width', w)
                     .attr('height', h);
         svg.append('g')
-          // .attr("transform", "translate(320,200)")
+          .attr('transform', 'translate(425, 175)')
           .selectAll('text')
           .data(words)
           .enter()
           .append('text')
           .style('font-size', function(d) {
-            return d.size*10 + 'px';
+            return d.size + 'px';
           })
           .style("fill", function(d, i) {
             return color(i);
           })
           .attr("transform", function(d) {
-            console.log(d)
-              // return "translate(" + [d.x, d.height] + ")rotate(" + d.rotate + ")";
+            return `translate(${d.x}, ${d.y})`;
           })
           .text(function(d) {
             return d.text;
@@ -95,3 +97,11 @@
   </script>
 </body>
 </html>
+
+<!--
+1)<g> elements are just big enough to contain its children
+<text> elements appear cut off by default because their baseline is bottom left corner and the y position corresponds to this baseline.
+
+2) Perform font-size scaling before words have been positioned so that d3-cloud's positioning algorithm is aware of the final size of the characters.
+Otherwise, the final rendering has lots of overlaps that lead to a very unaesthetic look.
+-->
