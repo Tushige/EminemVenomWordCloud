@@ -4,12 +4,16 @@
   <title>pies</title>
   <script src="./d3/d3.js"></script>
   <script src="./d3/d3.layout.cloud.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Knewave" rel="stylesheet">
   <style>
     body {
       background: black;
     }
     svg {
       margin-top: 200px;
+    }
+    text {
+      font-family: 'Knewave', cursive;
     }
   </style>
 </head>
@@ -21,24 +25,37 @@
     .then(function(lyrics) {
       var words = lyrics.split(' ');
       var frequencyTable = {};
+
       words.forEach(word => {
         if (!frequencyTable[word]) {
           frequencyTable[word] = 0;
         }
         frequencyTable[word]++;
       });
+
       var arrWords = Object.entries(frequencyTable);
+
       arrWords = arrWords.map(arr => {
         return {
           text: arr[0],
           size: arr[1]
         };
       });
-      var fontScale = d3.scaleLinear()
+
+      arrWords = arrWords.filter(word => word.size > 5);
+
+      var turnToLog = d3.scaleLinear()
+                        .domain([
+                          5,
+                          d3.max(arrWords, function(d) {
+                            return d.size;
+                          })
+                        ])
+                        .range([1, 10]);
+
+      var fontScale = d3.scaleLog()
                       .domain([
-                        d3.min(arrWords, function(d) {
-                          return d.size;
-                        }),
+                        5,
                         d3.max(arrWords, function(d) {
                           return d.size;
                         })
@@ -47,15 +64,27 @@
                         1,
                         100
                       ]);
+
+      var colorScale = d3.scaleLinear()
+                          .domain([
+                            1,
+                            100
+                          ])
+                          .range([
+                            1.0,
+                            0.1
+                          ])
       var dummyWords = [
         {text: 'hello', size: 10},
         {text: 'hello2', size: 15},
         {text: 'hello3', size: 20},
       ]
-      d3.layout.cloud().size([1000, 500])
+      d3.layout.cloud().size([600, 400])
         .words(arrWords)
         .rotate(0)
         .fontSize(function(word) {
+          console.log(`word size: ${word.size}`)
+          console.log(`scaled word size: ${fontScale(word.size)}`)
           return fontScale(word.size);
         })
         .on('word', function(word) {
@@ -80,7 +109,7 @@
             return d.size + 'px';
           })
           .style("fill", function(d, i) {
-            return d3.interpolateGreens(1 - fontScale(d.size)/100);
+            return d3.interpolateGreens(colorScale(d.size));
           })
           .attr("transform", function(d) {
             return `translate(${d.x}, ${d.y})`;
